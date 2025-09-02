@@ -56,10 +56,9 @@ def getData(baseUrl):
                 alt_text = img.get('alt', '')
 
                 if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
-                    dataList.append({
-                        '图片链接': real_src,
-                        '图片标题': alt_text
-                    })
+                    dataList.append({'图片链接': real_src})
+                    dataList.append({'图片标题': alt_text})
+
             # 2.#获取链接和标题
             title_div = house.find('div', class_='title')
             if title_div:
@@ -206,8 +205,13 @@ def demo():
             print("未找到title div")
 
 data = getData(BASEURL)
+count = 0
 for item in data:
+    if count % 7 == 0:
+        print("-" * 100)
+    count += 1
     print(item)
+print("-" * 100)
 # download_images(data)
 print(f"共爬取到 {len(data)} 条数据")
 
