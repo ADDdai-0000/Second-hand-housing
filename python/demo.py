@@ -68,13 +68,38 @@ def getData(baseUrl):
                     title = link_tag.get_text(strip=True)   #直接获取标题文本<a href = "">title<a/>
                     dataList.append({"标题": title, "链接": href})
 
-            position_div = house.find('div', class_='positionInfo')
+            position_div = house.find('div', class_='positionInfo') #获取地址信息
             if position_div:
                 links = position_div.find_all('a')
                 posi = ""
                 for link in links:
                     posi += link.get_text() + " "
                 dataList.append({"地址": posi.strip()})
+
+            house_div = house.find('div', class_='houseInfo')  #获取房屋信息
+            if house_div:
+                house_info = house_div.get_text(strip=True)
+                dataList.append({"房屋信息": house_info})
+
+            follow_div = house.find('div', class_='followInfo')
+            if follow_div:
+                follow = follow_div.get_text(strip=True)
+                dataList.append({"关注与发布时间": follow})
+
+            # 6. 获取价格信息
+            price_div = house.find('div', class_='priceInfo')
+            house_data = {}
+            if price_div:
+                total_price_div = price_div.find('div', class_='totalPrice totalPrice2')
+                if total_price_div:
+                    total_price_span = total_price_div.find('span')
+                    if total_price_span:
+                        house_data['总价'] = total_price_span.get_text(strip=True) + "万"
+                    else:
+                        house_data['总价'] = "未知"
+                else:
+                    house_data['总价'] = "未知"
+                dataList.append(house_data)
 
 
     return dataList
