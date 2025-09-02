@@ -66,7 +66,9 @@ def getData(baseUrl):
                 if link_tag:
                     href = link_tag.get('href')     #获取超链接
                     title = link_tag.get_text(strip=True)   #直接获取标题文本<a href = "">title<a/>
-                    dataList.append({"标题": title, "链接": href})
+                    dataList.append({"标题": title})
+                    dataList.append({"链接": href})
+
             # 3.获取地址信息
             position_div = house.find('div', class_='positionInfo')
             if position_div:
@@ -75,11 +77,13 @@ def getData(baseUrl):
                 for link in links:
                     posi += link.get_text() + " "
                 dataList.append({"地址": posi.strip()})
+
             # 4.获取房屋信息
-            house_div = house.find('div', class_='houseInfo')  #
+            house_div = house.find('div', class_='houseInfo')
             if house_div:
                 house_info = house_div.get_text(strip=True)
                 dataList.append({"房屋信息": house_info})
+
             # 5.关注与发布时间
             follow_div = house.find('div', class_='followInfo')
             if follow_div:
@@ -207,7 +211,7 @@ def demo():
 data = getData(BASEURL)
 count = 0
 for item in data:
-    if count % 7 == 0:
+    if count % 8 == 0:
         print("-" * 100)
     count += 1
     print(item)
