@@ -47,7 +47,8 @@ def getData(baseUrl):
 
         #开始爬取信息,全部塞入dataList
         for house in house_list:
-            img = house.find('img', class_='lj-lazy')  #获取图片以及相关信息
+            # 1.获取图片以及相关信息
+            img = house.find('img', class_='lj-lazy')
             if img:
                 #获取真实图片地址
                 real_src = img.get('data-original')
@@ -59,28 +60,28 @@ def getData(baseUrl):
                         '图片链接': real_src,
                         '图片标题': alt_text
                     })
-
-            title_div = house.find('div', class_='title')    #获取链接和标题
+            # 2.#获取链接和标题
+            title_div = house.find('div', class_='title')
             if title_div:
                 link_tag = title_div.find('a')
                 if link_tag:
                     href = link_tag.get('href')     #获取超链接
                     title = link_tag.get_text(strip=True)   #直接获取标题文本<a href = "">title<a/>
                     dataList.append({"标题": title, "链接": href})
-
-            position_div = house.find('div', class_='positionInfo') #获取地址信息
+            # 3.获取地址信息
+            position_div = house.find('div', class_='positionInfo')
             if position_div:
                 links = position_div.find_all('a')
                 posi = ""
                 for link in links:
                     posi += link.get_text() + " "
                 dataList.append({"地址": posi.strip()})
-
-            house_div = house.find('div', class_='houseInfo')  #获取房屋信息
+            # 4.获取房屋信息
+            house_div = house.find('div', class_='houseInfo')  #
             if house_div:
                 house_info = house_div.get_text(strip=True)
                 dataList.append({"房屋信息": house_info})
-
+            # 5.关注与发布时间
             follow_div = house.find('div', class_='followInfo')
             if follow_div:
                 follow = follow_div.get_text(strip=True)
