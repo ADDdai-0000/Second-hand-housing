@@ -240,8 +240,9 @@ count = 0
 for item in data:
     if count % len(COL_TITLE) == 0:
         print("-" * 100)
-    count = (count+1) % len(COL_TITLE)
     print(f"{COL_TITLE[count]} : {item}")
+    count = (count+1) % len(COL_TITLE)
+
 print("-" * 100)
 # download_images(data)
 print(f"共爬取到 {len(data)} 条数据")
