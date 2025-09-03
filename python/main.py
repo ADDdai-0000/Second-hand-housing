@@ -1,90 +1,46 @@
-from bs4 import BeautifulSoup
-import re
-import urllib.request, urllib.error
-import gzip
+import os
 import xlwt
-import time
-import requests
+from logindemo import main as login_main
+from demo import main as demo_main
 
-BASEURL = "https://bj.lianjia.com/ershoufang/"
+COL_TITLE = ["图片链接", "标题", "链接", "地址", "房屋信息", "关注与发布时间", '总价', "单价"]
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
-}
+def saveData(data_list, save_dir="lianjia_datas"):
+    if not data_list:
+        print("没有数据需要保存")
+        return
 
+    print("正在保存数据...")
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
-def getData(baseUrl):
-    dataList = []
-    for i in range(1, 2):
-        # 修正URL格式：需要在页码后加斜杠
-        url = baseUrl + "pg" + str(i) + "/"
-        print(f"正在请求URL: {url}")
+    book = xlwt.Workbook(encoding='utf-8', style_compression=0)
+    sheet = book.add_sheet('链家二手房', cell_overwrite_ok=True)
 
-        html = askUrl(url)
-        if not html:
-            print("获取HTML失败")
-            continue
+    # 写入标题行
+    for i in range(len(COL_TITLE)):
+        sheet.write(0, i, COL_TITLE[i])
 
-        # if "redirect" in html.lower() or "location.href" in html.lower():
-        #     print("可能被重定向了，尝试添加更多请求头")
-        #     continue
+    # 写入数据
+    for i, data in enumerate(data_list):
+        for j in range(min(len(data), len(COL_TITLE))):
+            sheet.write(i + 1, j, str(data[j]))
 
-        soup = BeautifulSoup(html, 'html.parser')
-
-        # 先检查是否找到了房源列表
-        house_list = soup.find_all('li', class_='clear LOGVIEWDATA LOGCLICKDATA')
-        print(f"找到 {len(house_list)} 个房源")
-
-        if len(house_list) == 0:
-            print("可能被反爬了，页面内容：")
-            print(html[:500])  # 打印前500字符查看内容
-            continue
-
-        for house in house_list:
-            img = house.find('img', class_='lj-lazy')
-            if img:
-                real_src = img.get('data-original')
-                alt_text = img.get('alt', '')
-
-                # 简化过滤条件：只要包含.jpg且不包含blank.gif
-                if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
-                    print(f"图片链接: {real_src}")
-                    print(f"标题: {alt_text}")
-                    print("-" * 50)
-                    dataList.append({
-                        'image_url': real_src,
-                        'title': alt_text
-                    })
-
-    return dataList
+    # 生成文件名,如DATA_NAME_1-10
+    page = input("请输入页数范围（例如：1-10）: ")
+    file_path = os.path.join(save_dir, f"lianjia_data_{page}.xls")
+    book.save(file_path)
+    print(f"数据已保存到: {file_path}")
 
 
-def askUrl(url):
-    request = urllib.request.Request(url, headers=headers)
-    html = ""
+if __name__ == '__main__':
+    # 获取数据
+    # print("正在获取demo数据...")
+    # data1 = demo_main()
+    print("正在获取login_demo数据...")
+    data = login_main()
 
-    try:
-        response = urllib.request.urlopen(request, timeout=10)
-        # 检查响应是否经过gzip压缩
-        content_encoding = response.info().get('Content-Encoding', '')
-        content = response.read()
+    print(f"总共获取到 {len(data)} 条数据")
 
-        if 'gzip' in content_encoding:
-            html = gzip.decompress(content).decode('utf-8', errors='ignore')
-        else:
-            html = content.decode('utf-8', errors='ignore')
-
-    except Exception as e:
-        print(f"请求错误: {e}")
-
-    return html
-
-
-# 测试
-data = getData(BASEURL)
-print(f"共爬取到 {len(data)} 条数据")
+    # 保存数据
+    saveData(data, "lianjia_datas")

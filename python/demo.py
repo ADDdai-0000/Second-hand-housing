@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
-
-from Demos.win32ts_logoff_disconnected import session
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import re
 import urllib.request, urllib.error
 import gzip
@@ -35,10 +35,11 @@ COL_TITLE = ["图片链接","标题","链接","地址","房屋信息","关注与
 
 session = requests.Session()
 
+#前五页可用
 def getData(baseUrl):
     dataList = []
     #一页最多30个,这里暂时只爬5页
-    for i in range(6,11):
+    for i in range(1,6):
         time.sleep(random.uniform(1,3))
         headers["User-Agent"] = ua.random
         # 修正URL格式：需要在页码后加斜杠
@@ -48,13 +49,6 @@ def getData(baseUrl):
         html = askUrl(url)
         if not html:
             print("获取HTML失败")
-
-            if i > 5:  # 从第6页开始特别容易触发反爬
-                print("检测到反爬机制，尝试使用备用方法...")
-                html = askUrlWithRetry(url, retries=3)
-                if not html:
-                    print(f"第 {i} 页多次尝试后仍然失败，跳过此页")
-                    continue
 
         soup = BeautifulSoup(html, 'html.parser')
 
@@ -205,6 +199,7 @@ def askUrl(url):
 
     return html
 
+
 #使用requests库的备用请求方法"
 def askUrlWithRetry(url, retries=3):
     """使用requests库的备用请求方法"""
@@ -328,20 +323,18 @@ def demo():
 #输出
 def main():
     data = getData(BASEURL)
-    count = 0
-    for item in data:
-        if count % len(COL_TITLE) == 0:
-            print("-" * 100)
-        print(f"{COL_TITLE[count]} : {item[count]}")
-        count = (count+1) % len(COL_TITLE)
-
-    print("-" * 100)
-    # download_images(data)
-    print(f"共爬取到 {len(data)} 条数据")
-    saveData(data)
-    print(data)
+    return data
+    # count = 0
+    # for item in data:
+    #     if count % len(COL_TITLE) == 0:
+    #         print("-" * 100)
+    #     print(f"{COL_TITLE[count]} : {item[count]}")
+    #     count = (count+1) % len(COL_TITLE)
+    #
+    # print("-" * 100)
+    # # download_images(data)
+    # print(f"共爬取到 {len(data)} 条数据")
+    # saveData(data)
+    # print(data)
 
 # demo()
-
-if __name__ == "__main__":
-    main()
