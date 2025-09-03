@@ -26,6 +26,7 @@ def getData(baseUrl):
     dataList = []
     #一页最多30个,这里暂时只爬一页
     for i in range(1, 2):
+
         # 修正URL格式：需要在页码后加斜杠
         url = baseUrl + "pg" + str(i) + "/"
         print(f"正在请求URL: {url}")
@@ -49,6 +50,7 @@ def getData(baseUrl):
 
         #开始爬取信息,全部塞入dataList
         for house in house_list:
+            datas = []
             # 1.获取图片以及相关信息
             img = house.find('img', class_='lj-lazy')
             if img:
@@ -60,7 +62,7 @@ def getData(baseUrl):
                 if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
                     # dataList.append({'图片链接': real_src})
                     # dataList.append({'图片标题': alt_text})
-                    dataList.append(real_src)
+                    datas.append(real_src)
                     # dataList.append(alt_text)
 
             # 2.#获取链接和标题
@@ -72,8 +74,8 @@ def getData(baseUrl):
                     title = link_tag.get_text(strip=True)   #直接获取标题文本<a href = "">title<a/>
                     # dataList.append({"标题": title})
                     # dataList.append({"链接": href})
-                    dataList.append(title)
-                    dataList.append(href)
+                    datas.append(title)
+                    datas.append(href)
 
             # 3.获取地址信息
             position_div = house.find('div', class_='positionInfo')
@@ -83,21 +85,21 @@ def getData(baseUrl):
                 for link in links:
                     posi += link.get_text() + " "
                 # dataList.append({"地址": posi.strip()})
-                dataList.append(posi.strip())
+                datas.append(posi.strip())
 
             # 4.获取房屋信息
             house_div = house.find('div', class_='houseInfo')
             if house_div:
                 house_info = house_div.get_text(strip=True)
                 # dataList.append({"房屋信息": house_info})
-                dataList.append(house_info)
+                datas.append(house_info)
 
             # 5.关注与发布时间
             follow_div = house.find('div', class_='followInfo')
             if follow_div:
                 follow = follow_div.get_text(strip=True)
                 # dataList.append({"关注与发布时间": follow})
-                dataList.append(follow)
+                datas.append(follow)
 
             # 6. 获取价格信息
             price_div = house.find('div', class_='priceInfo')
@@ -125,10 +127,10 @@ def getData(baseUrl):
                 else:
                     house_data['单价'] = "未知"
 
-                dataList.append(house_data["总价"])
-                dataList.append(house_data["单价"])
+                datas.append(house_data["总价"])
+                datas.append(house_data["单价"])
 
-
+            dataList.append(datas)
 
     return dataList
 
@@ -154,7 +156,6 @@ def askUrl(url):
     return html
 
 #下载网页图片
-
 def download_images(data_list, save_dir="lianjia_images"):
     # 创建保存目录
     if not os.path.exists(save_dir):
@@ -209,6 +210,29 @@ def download_images(data_list, save_dir="lianjia_images"):
 
     print(f"下载完成! 成功下载 {count}/{len(data_list)} 张图片")
 
+#保存数据
+def saveData(data_list, save_dir="lianjia_datas"):
+    print("saving data...")
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    book = xlwt.Workbook(encoding='utf-8', style_compression=0)
+    sheet = book.add_sheet('链家二手房', cell_overwrite_ok=True)
+    for i in range(len(COL_TITLE)):
+        sheet.write(0, i, COL_TITLE[i])
+
+    for i in range(len(data_list)):
+        data = data_list[i]
+        for j in range(len(data)):
+            sheet.write(i + 1, j, data[j])
+
+
+    # 保存文件
+    file_path = os.path.join(save_dir, "lianjia_data.xls")
+    book.save(file_path)
+    print(f"数据已保存到: {file_path}")
+
+
+
 # 测试
 def demo():
     url = "https://bj.lianjia.com/ershoufang/pg1/"
@@ -240,11 +264,13 @@ count = 0
 for item in data:
     if count % len(COL_TITLE) == 0:
         print("-" * 100)
-    print(f"{COL_TITLE[count]} : {item}")
+    print(f"{COL_TITLE[count]} : {item[count]}")
     count = (count+1) % len(COL_TITLE)
 
 print("-" * 100)
 # download_images(data)
 print(f"共爬取到 {len(data)} 条数据")
+saveData(data)
+print(data)
 
 # demo()
