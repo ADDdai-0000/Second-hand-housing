@@ -1,32 +1,46 @@
 from urllib.parse import urlparse
 
+from Demos.win32ts_logoff_disconnected import session
 from bs4 import BeautifulSoup
 import re
 import urllib.request, urllib.error
 import gzip
 import xlwt
 import os
+import random
 import time
 import requests
+from fake_useragent import UserAgent
 
+#随机生成user agent 应对防爬
+ua = UserAgent()
+#代理池,但是我没有
+PROXIES = []
 BASEURL = "https://bj.lianjia.com/ershoufang/"
-
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'User-Agent': ua.random,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-    'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
+    'Referer': 'https://bj.lianjia.com/ershoufang/',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-User': '?1',
+    'Cache-Control': 'max-age=0',
 }
 COL_TITLE = ["图片链接","标题","链接","地址","房屋信息","关注与发布时间",'总价',"单价"]
 
+session = requests.Session()
 
 def getData(baseUrl):
     dataList = []
     #一页最多30个,这里暂时只爬5页
     for i in range(6,11):
-
+        time.sleep(random.uniform(1,3))
+        headers["User-Agent"] = ua.random
         # 修正URL格式：需要在页码后加斜杠
         url = baseUrl + "pg" + str(i) + "/"
         print(f"正在请求URL: {url}")
@@ -34,7 +48,13 @@ def getData(baseUrl):
         html = askUrl(url)
         if not html:
             print("获取HTML失败")
-            continue
+
+            if i > 5:  # 从第6页开始特别容易触发反爬
+                print("检测到反爬机制，尝试使用备用方法...")
+                html = askUrlWithRetry(url, retries=3)
+                if not html:
+                    print(f"第 {i} 页多次尝试后仍然失败，跳过此页")
+                    continue
 
         soup = BeautifulSoup(html, 'html.parser')
 
@@ -49,90 +69,119 @@ def getData(baseUrl):
             continue
 
         #开始爬取信息,全部塞入dataList
-        for house in house_list:
-            datas = []
-            # 1.获取图片以及相关信息
-            img = house.find('img', class_='lj-lazy')
-            if img:
-                #获取真实图片地址
-                real_src = img.get('data-original')
-                #获取图片标题（非内容标题）
-                # alt_text = img.get('alt', '')
-
-                if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
-                    # dataList.append({'图片链接': real_src})
-                    # dataList.append({'图片标题': alt_text})
-                    datas.append(real_src)
-                    # dataList.append(alt_text)
-
-            # 2.#获取链接和标题
-            title_div = house.find('div', class_='title')
-            if title_div:
-                link_tag = title_div.find('a')
-                if link_tag:
-                    href = link_tag.get('href')     #获取超链接
-                    title = link_tag.get_text(strip=True)   #直接获取标题文本<a href = "">title<a/>
-                    # dataList.append({"标题": title})
-                    # dataList.append({"链接": href})
-                    datas.append(title)
-                    datas.append(href)
-
-            # 3.获取地址信息
-            position_div = house.find('div', class_='positionInfo')
-            if position_div:
-                links = position_div.find_all('a')
-                posi = ""
-                for link in links:
-                    posi += link.get_text() + " "
-                # dataList.append({"地址": posi.strip()})
-                datas.append(posi.strip())
-
-            # 4.获取房屋信息
-            house_div = house.find('div', class_='houseInfo')
-            if house_div:
-                house_info = house_div.get_text(strip=True)
-                # dataList.append({"房屋信息": house_info})
-                datas.append(house_info)
-
-            # 5.关注与发布时间
-            follow_div = house.find('div', class_='followInfo')
-            if follow_div:
-                follow = follow_div.get_text(strip=True)
-                # dataList.append({"关注与发布时间": follow})
-                datas.append(follow)
-
-            # 6. 获取价格信息
-            price_div = house.find('div', class_='priceInfo')
-            house_data = {}
-            if price_div:
-                #获取总价
-                total_price_div = price_div.find('div', class_='totalPrice totalPrice2')
-                if total_price_div:
-                    total_price_span = total_price_div.find('span')
-                    if total_price_span:
-                        house_data['总价'] = total_price_span.get_text(strip=True) + "万"
-                    else:
-                        house_data['总价'] = "未知"
-                else:
-                    house_data['总价'] = "未知"
-
-                #获取单价
-                unitPrice_div = price_div.find('div', class_='unitPrice')
-                if unitPrice_div:
-                    unitPrice_span = unitPrice_div.find('span')
-                    if unitPrice_span:
-                        house_data['单价'] = unitPrice_span.get_text(strip=True)
-                    else:
-                        house_data['单价'] = "未知"
-                else:
-                    house_data['单价'] = "未知"
-
-                datas.append(house_data["总价"])
-                datas.append(house_data["单价"])
-
-            dataList.append(datas)
+        findHoustData(dataList, house_list)
 
     return dataList
+
+
+def findHoustData(dataList, house_list):
+    for house in house_list:
+        datas = []
+        # 1.获取图片以及相关信息
+        findImg(datas, house)
+
+        # 2.#获取链接和标题
+        findTitle(datas, house)
+
+        # 3.获取地址信息
+        finPos(datas, house)
+
+        # 4.获取房屋信息
+        findHouseInfo(datas, house)
+
+        # 5.关注与发布时间
+        findFollow(datas, house)
+
+        # 6. 获取价格信息
+        findPrice(datas, house)
+
+        dataList.append(datas)
+
+
+def findPrice(datas, house):
+    price_div = house.find('div', class_='priceInfo')
+    house_data = {}
+    if price_div:
+        # 获取总价
+        total_price_div = price_div.find('div', class_='totalPrice totalPrice2')
+        if total_price_div:
+            total_price_span = total_price_div.find('span')
+            if total_price_span:
+                house_data['总价'] = total_price_span.get_text(strip=True) + "万"
+            else:
+                house_data['总价'] = "未知"
+        else:
+            house_data['总价'] = "未知"
+
+        # 获取单价
+        unitPrice_div = price_div.find('div', class_='unitPrice')
+        if unitPrice_div:
+            unitPrice_span = unitPrice_div.find('span')
+            if unitPrice_span:
+                house_data['单价'] = unitPrice_span.get_text(strip=True)
+            else:
+                house_data['单价'] = "未知"
+        else:
+            house_data['单价'] = "未知"
+
+        datas.append(house_data["总价"])
+        datas.append(house_data["单价"])
+
+
+def findFollow(datas, house):
+    follow_div = house.find('div', class_='followInfo')
+    if follow_div:
+        follow = follow_div.get_text(strip=True)
+        # dataList.append({"关注与发布时间": follow})
+        datas.append(follow)
+
+
+def findHouseInfo(datas, house):
+    house_div = house.find('div', class_='houseInfo')
+    if house_div:
+        house_info = house_div.get_text(strip=True)
+        # dataList.append({"房屋信息": house_info})
+        datas.append(house_info)
+
+
+def finPos(datas, house):
+    position_div = house.find('div', class_='positionInfo')
+    if position_div:
+        links = position_div.find_all('a')
+        posi = ""
+        for link in links:
+            posi += link.get_text() + " "
+        # dataList.append({"地址": posi.strip()})
+        datas.append(posi.strip())
+
+
+def findTitle(datas, house):
+    title_div = house.find('div', class_='title')
+    if title_div:
+        link_tag = title_div.find('a')
+        if link_tag:
+            href = link_tag.get('href')  # 获取超链接
+            title = link_tag.get_text(strip=True)  # 直接获取标题文本<a href = "">title<a/>
+            # dataList.append({"标题": title})
+            # dataList.append({"链接": href})
+            datas.append(title)
+            datas.append(href)
+
+
+def findImg(datas, house):
+    img = house.find('img', class_='lj-lazy')
+    if img:
+        # 获取真实图片地址
+        real_src = img.get('data-original')
+        # 获取图片标题（非内容标题）
+        # alt_text = img.get('alt', '')
+
+        if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
+            # dataList.append({'图片链接': real_src})
+            # dataList.append({'图片标题': alt_text})
+            datas.append(real_src)
+            # dataList.append(alt_text)
+
 
 #获取网页html文件
 def askUrl(url):
@@ -140,6 +189,7 @@ def askUrl(url):
     html = ""
 
     try:
+        time.sleep(random.uniform(1, 3))
         response = urllib.request.urlopen(request, timeout=10)
         # 检查响应是否经过gzip压缩
         content_encoding = response.info().get('Content-Encoding', '')
@@ -154,6 +204,26 @@ def askUrl(url):
         print(f"请求错误: {e}")
 
     return html
+
+#使用requests库的备用请求方法"
+def askUrlWithRetry(url, retries=3):
+    """使用requests库的备用请求方法"""
+    for attempt in range(retries):
+        try:
+            time.sleep(random.uniform(2, 4))
+            headers['User-Agent'] = ua.random
+
+            response = session.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+
+            return response.text
+
+        except Exception as e:
+            print(f"备用请求尝试 {attempt + 1} 失败: {e}")
+            if attempt < retries - 1:
+                time.sleep(random.uniform(3, 6))
+
+    return None
 
 #下载网页图片
 def download_images(data_list, save_dir="lianjia_images"):
