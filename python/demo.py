@@ -24,8 +24,8 @@ COL_TITLE = ["图片链接","标题","链接","地址","房屋信息","关注与
 
 def getData(baseUrl):
     dataList = []
-    #一页最多30个,这里暂时只爬一页
-    for i in range(1, 2):
+    #一页最多30个,这里暂时只爬5页
+    for i in range(6,11):
 
         # 修正URL格式：需要在页码后加斜杠
         url = baseUrl + "pg" + str(i) + "/"
@@ -227,11 +227,9 @@ def saveData(data_list, save_dir="lianjia_datas"):
 
 
     # 保存文件
-    file_path = os.path.join(save_dir, "lianjia_data.xls")
+    file_path = os.path.join(save_dir, "lianjia_data_6-10.xls")
     book.save(file_path)
     print(f"数据已保存到: {file_path}")
-
-
 
 # 测试
 def demo():
@@ -257,20 +255,23 @@ def demo():
         else:
             print("未找到title div")
 
-
 #输出
-data = getData(BASEURL)
-count = 0
-for item in data:
-    if count % len(COL_TITLE) == 0:
-        print("-" * 100)
-    print(f"{COL_TITLE[count]} : {item[count]}")
-    count = (count+1) % len(COL_TITLE)
+def main():
+    data = getData(BASEURL)
+    count = 0
+    for item in data:
+        if count % len(COL_TITLE) == 0:
+            print("-" * 100)
+        print(f"{COL_TITLE[count]} : {item[count]}")
+        count = (count+1) % len(COL_TITLE)
 
-print("-" * 100)
-# download_images(data)
-print(f"共爬取到 {len(data)} 条数据")
-saveData(data)
-print(data)
+    print("-" * 100)
+    # download_images(data)
+    print(f"共爬取到 {len(data)} 条数据")
+    saveData(data)
+    print(data)
 
 # demo()
+
+if __name__ == "__main__":
+    main()
