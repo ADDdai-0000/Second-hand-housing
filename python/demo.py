@@ -19,10 +19,12 @@ headers = {
     'Connection': 'keep-alive',
     'Upgrade-Insecure-Requests': '1',
 }
+COL_TITLE = ["图片链接","标题","链接","地址","房屋信息","关注与发布时间",'总价',"单价"]
 
 
 def getData(baseUrl):
     dataList = []
+    #一页最多30个,这里暂时只爬一页
     for i in range(1, 2):
         # 修正URL格式：需要在页码后加斜杠
         url = baseUrl + "pg" + str(i) + "/"
@@ -53,11 +55,13 @@ def getData(baseUrl):
                 #获取真实图片地址
                 real_src = img.get('data-original')
                 #获取图片标题（非内容标题）
-                alt_text = img.get('alt', '')
+                # alt_text = img.get('alt', '')
 
                 if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
-                    dataList.append({'图片链接': real_src})
-                    dataList.append({'图片标题': alt_text})
+                    # dataList.append({'图片链接': real_src})
+                    # dataList.append({'图片标题': alt_text})
+                    dataList.append(real_src)
+                    # dataList.append(alt_text)
 
             # 2.#获取链接和标题
             title_div = house.find('div', class_='title')
@@ -66,8 +70,10 @@ def getData(baseUrl):
                 if link_tag:
                     href = link_tag.get('href')     #获取超链接
                     title = link_tag.get_text(strip=True)   #直接获取标题文本<a href = "">title<a/>
-                    dataList.append({"标题": title})
-                    dataList.append({"链接": href})
+                    # dataList.append({"标题": title})
+                    # dataList.append({"链接": href})
+                    dataList.append(title)
+                    dataList.append(href)
 
             # 3.获取地址信息
             position_div = house.find('div', class_='positionInfo')
@@ -76,24 +82,28 @@ def getData(baseUrl):
                 posi = ""
                 for link in links:
                     posi += link.get_text() + " "
-                dataList.append({"地址": posi.strip()})
+                # dataList.append({"地址": posi.strip()})
+                dataList.append(posi.strip())
 
             # 4.获取房屋信息
             house_div = house.find('div', class_='houseInfo')
             if house_div:
                 house_info = house_div.get_text(strip=True)
-                dataList.append({"房屋信息": house_info})
+                # dataList.append({"房屋信息": house_info})
+                dataList.append(house_info)
 
             # 5.关注与发布时间
             follow_div = house.find('div', class_='followInfo')
             if follow_div:
                 follow = follow_div.get_text(strip=True)
-                dataList.append({"关注与发布时间": follow})
+                # dataList.append({"关注与发布时间": follow})
+                dataList.append(follow)
 
             # 6. 获取价格信息
             price_div = house.find('div', class_='priceInfo')
             house_data = {}
             if price_div:
+                #获取总价
                 total_price_div = price_div.find('div', class_='totalPrice totalPrice2')
                 if total_price_div:
                     total_price_span = total_price_div.find('span')
@@ -103,7 +113,21 @@ def getData(baseUrl):
                         house_data['总价'] = "未知"
                 else:
                     house_data['总价'] = "未知"
-                dataList.append(house_data)
+
+                #获取单价
+                unitPrice_div = price_div.find('div', class_='unitPrice')
+                if unitPrice_div:
+                    unitPrice_span = unitPrice_div.find('span')
+                    if unitPrice_span:
+                        house_data['单价'] = unitPrice_span.get_text(strip=True)
+                    else:
+                        house_data['单价'] = "未知"
+                else:
+                    house_data['单价'] = "未知"
+
+                dataList.append(house_data["总价"])
+                dataList.append(house_data["单价"])
+
 
 
     return dataList
@@ -130,6 +154,7 @@ def askUrl(url):
     return html
 
 #下载网页图片
+
 def download_images(data_list, save_dir="lianjia_images"):
     # 创建保存目录
     if not os.path.exists(save_dir):
@@ -208,10 +233,12 @@ def demo():
         else:
             print("未找到title div")
 
+
+#输出
 data = getData(BASEURL)
 count = 0
 for item in data:
-    if count % 8 == 0:
+    if count % len(COL_TITLE) == 0:
         print("-" * 100)
     count += 1
     print(item)
