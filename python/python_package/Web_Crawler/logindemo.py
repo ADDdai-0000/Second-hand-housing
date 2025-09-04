@@ -1,3 +1,15 @@
+"""
+
+    Project: 杭州二手房数据爬虫
+    File: login_demo.py
+    Method: selenium,bs4,xlwt,time,random
+    Desc: 这是一个使用selenium模拟浏览器进行数据爬虫的py文件，由于链家防爬比较难以使用requests攻破，所以采用这种
+        比较慢的方式来获取网页html。链家网址的格式为 https://<地区名首字母，如杭州为 hz>.lianjia.com/。可以以此
+        来获取任意地区的二手房数据。在main函数中可以自定义要爬的页数（北京和杭州最多33页其他的不知道）。最后的文件需
+        要在终端中自己输入文件名，保存到(../lianjia_datas/lianjia_data_XXXXXX.xls)。
+
+"""
+
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -371,7 +383,6 @@ def saveData(data_list, save_dir="lianjia_datas"):
 def main():
     try:
         print("开始爬取链家二手房数据...")
-
         data = getData_p_v(1, 33)
 
         if not data:
@@ -380,22 +391,3 @@ def main():
         return data
     except Exception as e:
         print(e)
-
-    #     print("\n爬取结果汇总:")
-    #     print("=" * 100)
-    #
-    #     for i, item in enumerate(data):
-    #         print(f"\n第 {i + 1} 条数据:")
-    #         print("-" * 50)
-    #         for j in range(min(len(COL_TITLE), len(item))):
-    #             print(f"{COL_TITLE[j]}: {item[j]}")
-    #
-    #     print("=" * 100)
-    #     print(f"共爬取到 {len(data)} 条数据")
-    #
-    #     saveData(data)
-    #
-    # except Exception as e:
-    #     print(f"程序执行出错: {str(e)}")
-    #     import traceback
-    #     traceback.print_exc()

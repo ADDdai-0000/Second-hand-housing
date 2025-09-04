@@ -43,4 +43,4 @@ if __name__ == '__main__':
     print(f"总共获取到 {len(data)} 条数据")
 
     # 保存数据
-    saveData(data, "lianjia_datas")
+    saveData(data, "../../lianjia_datas")
