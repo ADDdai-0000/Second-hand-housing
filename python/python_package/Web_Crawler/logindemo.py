@@ -1,9 +1,9 @@
 """
 
-    Project: 杭州二手房数据爬虫
-    File: login_demo.py
-    Method: selenium,bs4,xlwt,time,random
-    Desc: 这是一个使用selenium模拟浏览器进行数据爬虫的py文件，由于链家防爬比较难以使用requests攻破，所以采用这种
+    @Project: 杭州二手房数据爬虫
+    @File: login_demo.py
+    @Method: selenium,bs4,xlwt,time,random
+    @Desc: 这是一个使用selenium模拟浏览器进行数据爬虫的py文件，由于链家防爬比较难以使用requests攻破，所以采用这种
         比较慢的方式来获取网页html。链家网址的格式为 https://<地区名首字母，如杭州为 hz>.lianjia.com/，你可以
         在开头的全局命名修改。可以以此来获取任意地区的二手房数据。在main函数中可以自定义要爬的页数（北京和杭州最多
         33页其他的不知道）。最后的文件需要在终端中自己输入文件名，保存到(../lianjia_datas/lianjia_data_XXXXXX.xls)。
@@ -166,7 +166,7 @@ def getData_p_v(pg_begin, pg_end):
                 #     continue
 
                 """开始爬取信息"""
-                findHoustData(dataList, house_list)
+                findHouseData(dataList, house_list)
                 print(f"第 {pg} 页爬取完成，获取到 {len(house_list)} 条房源信息")
 
                 # 随机延迟，模拟人工操作,如果觉得久可以调低，但是要小心人工验证（目前没见过）
@@ -191,8 +191,8 @@ def getData_p_v(pg_begin, pg_end):
     return dataList
 
 
-# 原有的数据提取函数保持不变...
-def findHoustData(dataList, house_list):
+# 整合获取二手房信息
+def findHouseData(dataList, house_list):
     for house in house_list:
         datas = []
         # 1.获取图片以及相关信息
@@ -218,7 +218,7 @@ def findHoustData(dataList, house_list):
 
         dataList.append(datas)
 
-
+# 获取价格信息
 def findPrice(datas, house):
     try:
         price_div = house.find('div', class_='priceInfo')
@@ -253,7 +253,7 @@ def findPrice(datas, house):
 
     #上述代码已进行过空数据处理，这里不再append
 
-
+# 获取关注度信息
 def findFollow(datas, house):
     try:
         follow_div = house.find('div', class_='followInfo')
@@ -265,7 +265,7 @@ def findFollow(datas, house):
     except Exception as e:
         print(f"未知异常 : {str(e)}")
 
-
+# 获取二手房详细描述信息
 def findHouseInfo(datas, house):
     try:
         house_div = house.find('div', class_='houseInfo')
@@ -280,7 +280,7 @@ def findHouseInfo(datas, house):
         print(f"未知异常 : {str(e)}")
     datas.append("None")
 
-
+# 获取地址
 def finPos(datas, house):
     try:
         position_div = house.find('div', class_='positionInfo')
@@ -298,7 +298,7 @@ def finPos(datas, house):
         print(f"未知异常 : {e}")
     datas.append("None")
 
-
+#获取tag列表
 def findTag(datas, house):
     try:
         tag_lis = []
@@ -315,7 +315,7 @@ def findTag(datas, house):
         print(f"未知异常 : {e}")
     datas.append("None")
 
-
+#获取标题
 def findTitle(datas, house):
     try:
         title_div = house.find('div', class_='title')
@@ -332,7 +332,7 @@ def findTitle(datas, house):
         print(f"未知错误 : {e}")
     datas.extend(['None', 'None'])
 
-
+#获取图片地址
 def findImg(datas, house):
     try:
         img = house.find('img', class_='lj-lazy')
