@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 from bs4 import BeautifulSoup
@@ -191,7 +193,9 @@ def test():
     #file=open(file_path, "r", encoding="utf-8")
     #house_data = cut(file)
 
-    file_path = r"C:\Users\zjdql\Desktop\lianjia_data_hz_1-33.xls"
+    base_dir = os.path.dirname(__file__)
+    file_path = os.path.join(base_dir, "../../lianjia_datas/lianjia_data_hz_tag_1-33.xls")
+    # file_path = r"\lianjia_data_hz_1-33.xls"
     file = pd.read_excel(file_path)  # 直接读取 Excel
     house_data = cut(file)
 
