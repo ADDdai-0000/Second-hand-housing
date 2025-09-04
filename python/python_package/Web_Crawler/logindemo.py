@@ -350,7 +350,7 @@ def findImg(datas, house):
     datas.append("None")
 
 
-def saveData(data_list, save_dir="lianjia_datas"):
+def saveData(data_list, save_dir="../../lianjia_datas"):
     if not data_list:
         print("没有数据需要保存")
         return
