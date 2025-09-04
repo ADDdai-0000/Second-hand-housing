@@ -210,98 +210,134 @@ def findHoustData(dataList, house_list):
 
 
 def findPrice(datas, house):
-    price_div = house.find('div', class_='priceInfo')
-    house_data = {}
-    if price_div:
-        # 获取总价
-        total_price_div = price_div.find('div', class_='totalPrice totalPrice2')
-        if total_price_div:
-            total_price_span = total_price_div.find('span')
-            if total_price_span:
-                house_data['总价'] = total_price_span.get_text(strip=True) + "万"
+    try:
+        price_div = house.find('div', class_='priceInfo')
+        house_data = {}
+        if price_div:
+            # 获取总价
+            total_price_div = price_div.find('div', class_='totalPrice totalPrice2')
+            if total_price_div:
+                total_price_span = total_price_div.find('span')
+                if total_price_span:
+                    house_data['总价'] = total_price_span.get_text(strip=True) + "万"
+                else:
+                    house_data['总价'] = "未知"
             else:
                 house_data['总价'] = "未知"
-        else:
-            house_data['总价'] = "未知"
 
-        # 获取单价
-        unitPrice_div = price_div.find('div', class_='unitPrice')
-        if unitPrice_div:
-            unitPrice_span = unitPrice_div.find('span')
-            if unitPrice_span:
-                house_data['单价'] = unitPrice_span.get_text(strip=True)
+            # 获取单价
+            unitPrice_div = price_div.find('div', class_='unitPrice')
+            if unitPrice_div:
+                unitPrice_span = unitPrice_div.find('span')
+                if unitPrice_span:
+                    house_data['单价'] = unitPrice_span.get_text(strip=True)
+                else:
+                    house_data['单价'] = "未知"
             else:
                 house_data['单价'] = "未知"
-        else:
-            house_data['单价'] = "未知"
 
-        datas.append(house_data["总价"])
-        datas.append(house_data["单价"])
+            datas.append(house_data["总价"])
+            datas.append(house_data["单价"])
+    except Exception as e:
+        print(f"未知异常 : {str(e)}")
+
+    #上述代码已进行过空数据处理，这里不再append
 
 
 def findFollow(datas, house):
-    follow_div = house.find('div', class_='followInfo')
-    if follow_div:
-        follow = follow_div.get_text(strip=True)
-        # dataList.append({"关注与发布时间": follow})
-        datas.append(follow)
+    try:
+        follow_div = house.find('div', class_='followInfo')
+        if follow_div:
+            follow = follow_div.get_text(strip=True)
+            datas.append(follow)
+    except AttributeError:
+        pass
+    except Exception as e:
+        print(f"未知异常 : {str(e)}")
 
 
 def findHouseInfo(datas, house):
-    house_div = house.find('div', class_='houseInfo')
-    if house_div:
-        house_info = house_div.get_text(strip=True)
-        # dataList.append({"房屋信息": house_info})
-        datas.append(house_info)
+    try:
+        house_div = house.find('div', class_='houseInfo')
+        if house_div:
+            house_info = house_div.get_text(strip=True)
+            # dataList.append({"房屋信息": house_info})
+            datas.append(house_info)
+            return
+    except AttributeError:
+        pass
+    except Exception as e:
+        print(f"未知异常 : {str(e)}")
+    datas.append("None")
 
 
 def finPos(datas, house):
-    position_div = house.find('div', class_='positionInfo')
-    if position_div:
-        links = position_div.find_all('a')
-        posi = ""
-        for link in links:
-            posi += link.get_text() + " "
-        # dataList.append({"地址": posi.strip()})
-        datas.append(posi.strip())
+    try:
+        position_div = house.find('div', class_='positionInfo')
+        if position_div:
+            links = position_div.find_all('a')
+            posi = ""
+            for link in links:
+                posi += link.get_text() + " "
+
+            datas.append(posi.strip())
+            return
+    except AttributeError as e:
+        pass
+    except Exception as e:
+        print(f"未知异常 : {e}")
+    datas.append("None")
 
 
 def findTag(datas, house):
-    tag_lis = []
-    tag_div = house.find('div', class_='tag')
-    if tag_div:
-        tag_spans = tag_div.find_all('span')
-        for tag_span in tag_spans:
-            tag_lis.append(tag_span.get_text(strip=True))
-        datas.append(tag_lis)
+    try:
+        tag_lis = []
+        tag_div = house.find('div', class_='tag')
+        if tag_div:
+            tag_spans = tag_div.find_all('span')
+            for tag_span in tag_spans:
+                tag_lis.append(tag_span.get_text(strip=True))
+            datas.append(tag_lis)
+            return
+    except AttributeError:
+        pass
+    except Exception as e:
+        print(f"未知异常 : {e}")
+    datas.append("None")
 
 
 def findTitle(datas, house):
-    title_div = house.find('div', class_='title')
-    if title_div:
-        link_tag = title_div.find('a')
-        if link_tag:
-            href = link_tag.get('href')  # 获取超链接
-            title = link_tag.get_text(strip=True)  # 直接获取标题文本<a href = "">title<a/>
-            # dataList.append({"标题": title})
-            # dataList.append({"链接": href})
-            datas.append(title)
-            datas.append(href)
+    try:
+        title_div = house.find('div', class_='title')
+        if title_div:
+            link_tag = title_div.find('a')
+            if link_tag:
+                href = link_tag.get('href')  # 获取超链接
+                title = link_tag.get_text(strip=True)  # 直接获取标题文本<a href = "">title<a/>
+                datas.extend([href, title])
+                return
+    except AttributeError:
+        pass
+    except Exception as e:
+        print(f"未知错误 : {e}")
+    datas.extend(['None', 'None'])
 
 
 def findImg(datas, house):
-    img = house.find('img', class_='lj-lazy')
-    if img:
-        # 获取真实图片地址
-        real_src = img.get('data-original')
-        # 获取图片标题（非内容标题）
-        # alt_text = img.get('alt', '')
+    try:
+        img = house.find('img', class_='lj-lazy')
+        if img:
+            # 获取真实图片地址
+            real_src = img.get('data-original')
 
-        if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
-            # dataList.append({'图片链接': real_src})
-            # dataList.append({'图片标题': alt_text})
-            datas.append(real_src)
-            # dataList.append(alt_text)
+            if real_src and '.jpg' in real_src and 'blank.gif' not in real_src:
+                datas.append(real_src)
+                return
+    except AttributeError as e:
+        pass
+    except Exception as e:
+        print(f"未知异常 : {e}")
+    datas.append("None")
 
 
 def saveData(data_list, save_dir="lianjia_datas"):
