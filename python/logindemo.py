@@ -18,8 +18,8 @@ from fake_useragent import UserAgent
 
 # 随机生成user agent
 ua = UserAgent()
-BASEURL = "https://bj.lianjia.com/ershoufang/"
-COL_TITLE = ["图片链接", "标题", "链接", "地址", "房屋信息", "关注与发布时间", '总价', "单价"]
+BASEURL = "https://hz.lianjia.com/ershoufang/"
+COL_TITLE = ["图片链接", "标题", "链接", "地址", "房屋信息", "关注与发布时间", '总价', "单价","标签"]
 
 
 # 更真实的浏览器配置
@@ -96,12 +96,13 @@ def getData_p_v(pg_begin, pg_end):
     browser = None
 
     try:
-        browser = create_stealth_browser()
+        # browser = create_stealth_browser()
+        browser = webdriver.Chrome()
 
         # 先访问首页建立会话
         print("正在建立会话...")
-        browser.get("https://bj.lianjia.com/")
-        time.sleep(random.uniform(3, 5))
+        browser.get("https://hz.lianjia.com/")
+        time.sleep(random.uniform(3,4))
 
         for pg in range(pg_begin, pg_end + 1):
             url = BASEURL + "pg" + str(pg) + "/"
@@ -199,8 +200,11 @@ def findHoustData(dataList, house_list):
         # 5.关注与发布时间
         findFollow(datas, house)
 
-        # 6. 获取价格信息
+        # 6.获取价格信息
         findPrice(datas, house)
+
+        # 7.获取标签信息
+        findTag(datas, house)
 
         dataList.append(datas)
 
@@ -260,6 +264,16 @@ def finPos(datas, house):
             posi += link.get_text() + " "
         # dataList.append({"地址": posi.strip()})
         datas.append(posi.strip())
+
+
+def findTag(datas, house):
+    tag_lis = []
+    tag_div = house.find('div', class_='tag')
+    if tag_div:
+        tag_spans = tag_div.find_all('span')
+        for tag_span in tag_spans:
+            tag_lis.append(tag_span.get_text(strip=True))
+        datas.append(tag_lis)
 
 
 def findTitle(datas, house):

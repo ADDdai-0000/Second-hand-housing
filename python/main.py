@@ -3,7 +3,7 @@ import xlwt
 from logindemo import main as login_main
 from demo import main as demo_main
 
-COL_TITLE = ["图片链接", "标题", "链接", "地址", "房屋信息", "关注与发布时间", '总价', "单价"]
+COL_TITLE = ["图片链接", "标题", "链接", "地址", "房屋信息", "关注与发布时间", '总价', "单价","标签"]
 
 def saveData(data_list, save_dir="lianjia_datas"):
     if not data_list:
