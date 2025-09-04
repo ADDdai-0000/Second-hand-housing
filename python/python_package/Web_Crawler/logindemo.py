@@ -4,13 +4,14 @@
     File: login_demo.py
     Method: selenium,bs4,xlwt,time,random
     Desc: 这是一个使用selenium模拟浏览器进行数据爬虫的py文件，由于链家防爬比较难以使用requests攻破，所以采用这种
-        比较慢的方式来获取网页html。链家网址的格式为 https://<地区名首字母，如杭州为 hz>.lianjia.com/。可以以此
-        来获取任意地区的二手房数据。在main函数中可以自定义要爬的页数（北京和杭州最多33页其他的不知道）。最后的文件需
-        要在终端中自己输入文件名，保存到(../lianjia_datas/lianjia_data_XXXXXX.xls)。
+        比较慢的方式来获取网页html。链家网址的格式为 https://<地区名首字母，如杭州为 hz>.lianjia.com/，你可以
+        在开头的全局命名修改。可以以此来获取任意地区的二手房数据。在main函数中可以自定义要爬的页数（北京和杭州最多
+        33页其他的不知道）。最后的文件需要在终端中自己输入文件名，保存到(../lianjia_datas/lianjia_data_XXXXXX.xls)。
+        运行在当前文件夹下main..py即可。
 
 """
 
-from urllib.parse import urlparse
+
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -18,19 +19,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-import re
-import urllib.request, urllib.error
-import gzip
 import xlwt
 import os
 import random
 import time
-import requests
 from fake_useragent import UserAgent
 
 # 随机生成user agent
 ua = UserAgent()
 BASEURL = "https://hz.lianjia.com/ershoufang/"
+INDEXURL = "https://hz.lianjia.com/"
 COL_TITLE = ["图片链接", "标题", "链接", "地址", "房屋信息", "关注与发布时间", '总价', "单价","标签"]
 
 
@@ -101,8 +99,7 @@ def human_like_behavior(browser):
     # 随机移动鼠标（模拟）
     time.sleep(random.uniform(1, 2))
 
-
-# 后几页爬取方法（增强版）
+# 爬取数据
 def getData_p_v(pg_begin, pg_end):
     dataList = []
     browser = None
@@ -113,7 +110,7 @@ def getData_p_v(pg_begin, pg_end):
 
         # 先访问首页建立会话
         print("正在建立会话...")
-        browser.get("https://hz.lianjia.com/")
+        browser.get(INDEXURL)
         time.sleep(random.uniform(3,4))
 
         for pg in range(pg_begin, pg_end + 1):
@@ -153,6 +150,7 @@ def getData_p_v(pg_begin, pg_end):
                 house_list2 = soup.find_all('li', class_='clear LOGCLICKDATA')
                 house_list3 = soup.find_all('li', class_='clear LOGVIEWDATA')
                 house_list = house_list1 + house_list2 + house_list3
+                #由于验证码无法处理，这一段可以删除不看
                 # if len(house_list) == 0:
                 #     print(f"第 {pg} 页未找到房源信息，可能被反爬")
                 #
@@ -167,11 +165,11 @@ def getData_p_v(pg_begin, pg_end):
                 #         input("请手动处理验证码后按回车继续...")
                 #     continue
 
-                # 开始爬取信息
+                """开始爬取信息"""
                 findHoustData(dataList, house_list)
                 print(f"第 {pg} 页爬取完成，获取到 {len(house_list)} 条房源信息")
 
-                # 随机延迟，模拟人工操作
+                # 随机延迟，模拟人工操作,如果觉得久可以调低，但是要小心人工验证（目前没见过）
                 time.sleep(random.uniform(2, 4))
 
             except Exception as e:
